@@ -46,114 +46,126 @@
 
         .table-input { background: #0f172a; color: white; border: 1px solid #334155; padding: 5px; border-radius: 4px; width: 90px; }
         .table-select { background: #0f172a; color: white; border: 1px solid #334155; padding: 5px; border-radius: 4px; }
+
+        .unauthorized-screen { text-align: center; padding: 100px 20px; display: none; }
+        .unauthorized-screen h2 { color: var(--error-color); font-size: 2rem; margin-bottom: 15px; }
     </style>
 </head>
 <body>
 
-    <div class="nav-links"><a href="index.html">⬅️ العودة للمتجر الرئيسي</a></div>
-
-    <h1>COMMAND CENTER</h1>
-    <div class="tabs">
-        <button class="tab-btn active" onclick="showTab('tab-products', event)">🤖 البوتات</button>
-        <button class="tab-btn" onclick="showTab('tab-users', event)">👥 المستخدمين</button>
-        <button class="tab-btn" onclick="showTab('tab-coupons', event)">🎟️ أكواد الخصم</button>
-        <button class="tab-btn" onclick="showTab('tab-news', event)">📢 الأخبار</button>
-        <button class="tab-btn" onclick="showTab('tab-orders', event)">📜 الطلبات</button>
+    <!-- شاشة الحماية في حال لم يكن المستخدم هو المؤسس -->
+    <div class="unauthorized-screen" id="unauthorized-box">
+        <h2>❌ غير مصرح لك بالدخول</h2>
+        <p style="color: var(--text-dim); margin-bottom: 20px;">هذه لوحة التحكم مخصصة للمؤسس (`rtm3z`) فقط.</p>
+        <a href="index.html" class="nav-links" style="display: inline-block;">⬅️ العودة للمتجر الرئيسي</a>
     </div>
 
-    <!-- TAB: PRODUCTS -->
-    <div id="tab-products" class="admin-section active">
-        <h2>إدارة البوتات والمنتجات</h2>
-        <button class="btn btn-reset" onclick="resetProductsStorage()">⚠️ إعادة ضبط وتفريغ بضائع المتجر الافتراضية</button>
-        
-        <div style="border-top: 1px solid #334155; padding-top: 15px; margin-top: 15px;">
-            <h3>إضافة بوت جديد للمتجر</h3>
-            <div class="form-group"><label>اسم البوت:</label><input type="text" id="bot-name" placeholder="مثلاً: بوت تذاكر"></div>
-            <div class="form-group"><label>السعر (بالكريدت):</label><input type="number" id="bot-price" placeholder="50"></div>
-            <div class="form-group"><label>المخزون:</label><input type="number" id="bot-stock" placeholder="10"></div>
-            <div class="form-group"><label>التصنيف:</label>
-                <select id="bot-category">
-                    <option value="حماية">حماية</option>
-                    <option value="ألعاب">ألعاب</option>
-                    <option value="موسيقى">موسيقى</option>
-                    <option value="أخرى">أخرى</option>
-                </select>
+    <!-- محتوى لوحة التحكم الأساسي -->
+    <div id="admin-main-wrapper" style="display: none;">
+        <div class="nav-links"><a href="index.html">⬅️ العودة للمتجر الرئيسي</a></div>
+
+        <h1>COMMAND CENTER</h1>
+        <div class="tabs">
+            <button class="tab-btn active" onclick="showTab('tab-products', event)">🤖 البوتات</button>
+            <button class="tab-btn" onclick="showTab('tab-users', event)">👥 المستخدمين</button>
+            <button class="tab-btn" onclick="showTab('tab-coupons', event)">🎟️ أكواد الخصم</button>
+            <button class="tab-btn" onclick="showTab('tab-news', event)">📢 الأخبار</button>
+            <button class="tab-btn" onclick="showTab('tab-orders', event)">📜 الطلبات</button>
+        </div>
+
+        <!-- TAB: PRODUCTS -->
+        <div id="tab-products" class="admin-section active">
+            <h2>إدارة البوتات والمنتجات</h2>
+            <button class="btn btn-reset" onclick="resetProductsStorage()">⚠️ إعادة ضبط وتفريغ بضائع المتجر الافتراضية</button>
+            
+            <div style="border-top: 1px solid #334155; padding-top: 15px; margin-top: 15px;">
+                <h3>إضافة بوت جديد للمتجر</h3>
+                <div class="form-group"><label>اسم البوت:</label><input type="text" id="bot-name" placeholder="مثلاً: بوت تذاكر"></div>
+                <div class="form-group"><label>السعر (بالكريدت):</label><input type="number" id="bot-price" placeholder="50"></div>
+                <div class="form-group"><label>المخزون:</label><input type="number" id="bot-stock" placeholder="10"></div>
+                <div class="form-group"><label>التصنيف:</label>
+                    <select id="bot-category">
+                        <option value="حماية">حماية</option>
+                        <option value="ألعاب">ألعاب</option>
+                        <option value="موسيقى">موسيقى</option>
+                        <option value="أخرى">أخرى</option>
+                    </select>
+                </div>
+                <div class="form-group"><label>الوصف:</label><textarea id="bot-desc" placeholder="شخصيات وخصائص البوت..."></textarea></div>
+                <div class="form-group"><label>رابط الصورة:</label><input type="text" id="bot-img" placeholder="https://example.com/image.png"></div>
+                <div class="form-group"><label>لون الزر:</label>
+                    <select id="bot-color">
+                        <option value="btn-cyan">أزرق</option>
+                        <option value="btn-purple">بنفسجي</option>
+                        <option value="btn-green">أخضر</option>
+                        <option value="btn-gold">ذهبي</option>
+                    </select>
+                </div>
+                <button class="btn btn-add" onclick="addBot()">إضافة البوت</button>
             </div>
-            <div class="form-group"><label>الوصف:</label><textarea id="bot-desc" placeholder="شخصيات وخصائص البوت..."></textarea></div>
-            <div class="form-group"><label>رابط الصورة:</label><input type="text" id="bot-img" placeholder="https://example.com/image.png"></div>
-            <div class="form-group"><label>لون الزر:</label>
-                <select id="bot-color">
-                    <option value="btn-cyan">أزرق</option>
-                    <option value="btn-purple">بنفسجي</option>
-                    <option value="btn-green">أخضر</option>
-                    <option value="btn-gold">ذهبي</option>
-                </select>
+
+            <div class="table-container">
+                <table>
+                    <thead><tr><th>الاسم</th><th>التصنيف</th><th>السعر</th><th>المخزون</th><th>إجراء</th></tr></thead>
+                    <tbody id="admin-products-list"></tbody>
+                </table>
             </div>
-            <button class="btn btn-add" onclick="addBot()">إضافة البوت</button>
         </div>
 
-        <div class="table-container">
-            <table>
-                <thead><tr><th>الاسم</th><th>التصنيف</th><th>السعر</th><th>المخزون</th><th>إجراء</th></tr></thead>
-                <tbody id="admin-products-list"></tbody>
-            </table>
+        <!-- TAB: USERS -->
+        <div id="tab-users" class="admin-section">
+            <h2>إدارة المستخدمين والأرصدة</h2>
+            <div class="table-container">
+                <table>
+                    <thead><tr><th>اسم المستخدم</th><th>الرصيد 💳</th><th>الرتبة</th><th>إجراء</th></tr></thead>
+                    <tbody id="admin-users-list"></tbody>
+                </table>
+            </div>
         </div>
-    </div>
 
-    <!-- TAB: USERS -->
-    <div id="tab-users" class="admin-section">
-        <h2>إدارة المستخدمين والأرصدة</h2>
-        <div class="table-container">
-            <table>
-                <thead><tr><th>اسم المستخدم</th><th>الرصيد 💳</th><th>الرتبة</th><th>إجراء</th></tr></thead>
-                <tbody id="admin-users-list"></tbody>
-            </table>
+        <!-- TAB: COUPONS -->
+        <div id="tab-coupons" class="admin-section">
+            <h2>إدارة أكواد الخصم</h2>
+            <div class="form-group"><label>كود الخصم (مثال: KSA96):</label><input type="text" id="coupon-code" placeholder="أدخل الكود..."></div>
+            <div class="form-group"><label>نسبة الخصم (%):</label><input type="number" id="coupon-discount" placeholder="مثلاً: 30"></div>
+            <div class="form-group"><label>تاريخ إنتهاء الصلاحية:</label><input type="date" id="coupon-expiry"></div>
+            <button class="btn btn-coupon" onclick="addCoupon()">إضافة وتفعيل الكود</button>
+            
+            <div class="table-container">
+                <table>
+                    <thead><tr><th>الكود</th><th>الخصم (%)</th><th>تاريخ الانتهاء</th><th>الحالة</th><th>إجراء</th></tr></thead>
+                    <tbody id="admin-coupons-list"></tbody>
+                </table>
+            </div>
         </div>
-    </div>
 
-    <!-- TAB: COUPONS -->
-    <div id="tab-coupons" class="admin-section">
-        <h2>إدارة أكواد الخصم</h2>
-        <div class="form-group"><label>كود الخصم (مثال: KSA96):</label><input type="text" id="coupon-code" placeholder="أدخل الكود..."></div>
-        <div class="form-group"><label>نسبة الخصم (%):</label><input type="number" id="coupon-discount" placeholder="مثلاً: 30"></div>
-        <div class="form-group"><label>تاريخ إنتهاء الصلاحية:</label><input type="date" id="coupon-expiry"></div>
-        <button class="btn btn-coupon" onclick="addCoupon()">إضافة وتفعيل الكود</button>
-        
-        <div class="table-container">
-            <table>
-                <thead><tr><th>الكود</th><th>الخصم (%)</th><th>تاريخ الانتهاء</th><th>الحالة</th><th>إجراء</th></tr></thead>
-                <tbody id="admin-coupons-list"></tbody>
-            </table>
+        <!-- TAB: NEWS -->
+        <div id="tab-news" class="admin-section">
+            <h2>نشر خبر عاجل</h2>
+            <div class="form-group">
+                <label>نص الخبر (سيظهر في أعلى المتجر):</label>
+                <textarea id="news-text" rows="4" placeholder="مثلاً: خصم 50% على جميع بوتات الحماية اليوم! 🚀"></textarea>
+            </div>
+            <button class="btn btn-news" onclick="postNews()">نشر الخبر الآن</button>
+            <div style="margin-top: 20px; text-align: center;">
+                <p style="color: var(--text-dim); font-size: 0.8rem;">الخبر الحالي النشط:</p>
+                <p id="current-news-display" style="color: var(--primary-neon); font-weight: bold;"></p>
+            </div>
         </div>
-    </div>
 
-    <!-- TAB: NEWS -->
-    <div id="tab-news" class="admin-section">
-        <h2>نشر خبر عاجل</h2>
-        <div class="form-group">
-            <label>نص الخبر (سيظهر في أعلى المتجر):</label>
-            <textarea id="news-text" rows="4" placeholder="مثلاً: خصم 50% على جميع بوتات الحماية اليوم! 🚀"></textarea>
-        </div>
-        <button class="btn btn-news" onclick="postNews()">نشر الخبر الآن</button>
-        <div style="margin-top: 20px; text-align: center;">
-            <p style="color: var(--text-dim); font-size: 0.8rem;">الخبر الحالي النشط:</p>
-            <p id="current-news-display" style="color: var(--primary-neon); font-weight: bold;"></p>
-        </div>
-    </div>
-
-    <!-- TAB: ORDERS -->
-    <div id="tab-orders" class="admin-section">
-        <h2>سجل المبيعات والطلبات</h2>
-        <div class="table-container">
-            <table>
-                <thead><tr><th>يوزر المشتري</th><th>اسم البوت</th><th>السعر</th><th>الوقت</th></tr></thead>
-                <tbody id="admin-orders-list"></tbody>
-            </table>
+        <!-- TAB: ORDERS -->
+        <div id="tab-orders" class="admin-section">
+            <h2>سجل المبيعات والطلبات</h2>
+            <div class="table-container">
+                <table>
+                    <thead><tr><th>يوزر المشتري</th><th>اسم البوت</th><th>السعر</th><th>الوقت</th></tr></thead>
+                    <tbody id="admin-orders-list"></tbody>
+                </table>
+            </div>
         </div>
     </div>
 
     <script>
-        // استخدام المفاتيح المتوافقة مع المتجر الرئيسي (resol_*)
         let products = JSON.parse(localStorage.getItem('resol_products')) || [];
         let users = JSON.parse(localStorage.getItem('resol_users')) || [];
         let orders = JSON.parse(localStorage.getItem('resol_orders')) || [];
@@ -162,6 +174,36 @@
             "KSA96": { discount: 30, expiry: "2026-12-31" },
             "AZNA96": { discount: 50, expiry: "2026-12-31" }
         };
+
+        // التحقق من صلاحيات المؤسس عبر السيرفر واللوكال ستوريج
+        async function verifyAdminAccess() {
+            try {
+                const res = await fetch('/api/user');
+                const data = await res.json();
+                
+                let localUser = JSON.parse(localStorage.getItem('resol_current_user')) || null;
+                let username = (data.loggedIn && data.user) ? data.user.username : (localUser ? localUser.username : null);
+
+                if (username === 'rtm3z') {
+                    document.getElementById('admin-main-wrapper').style.display = 'block';
+                    document.getElementById('unauthorized-box').style.display = 'none';
+                    renderProducts();
+                } else {
+                    document.getElementById('admin-main-wrapper').style.display = 'none';
+                    document.getElementById('unauthorized-box').style.display = 'block';
+                }
+            } catch (e) {
+                let localUser = JSON.parse(localStorage.getItem('resol_current_user')) || null;
+                if (localUser && localUser.username === 'rtm3z') {
+                    document.getElementById('admin-main-wrapper').style.display = 'block';
+                    document.getElementById('unauthorized-box').style.display = 'none';
+                    renderProducts();
+                } else {
+                    document.getElementById('admin-main-wrapper').style.display = 'none';
+                    document.getElementById('unauthorized-box').style.display = 'block';
+                }
+            }
+        }
 
         function showTab(tabId, event) {
             document.querySelectorAll('.admin-section').forEach(s => s.classList.remove('active'));
@@ -364,7 +406,8 @@
             `).join('');
         }
 
-        renderProducts();
+        // تشغيل فحص صلاحيات المؤسس فور تحميل الصفحة
+        verifyAdminAccess();
     </script>
 </body>
 </html>

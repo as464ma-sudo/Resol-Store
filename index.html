@@ -22,6 +22,21 @@
             position: sticky; top: 0; z-index: 2500;
         }
 
+        /* شريط الأخبار القادم من لوحة الأدمن */
+        .admin-news-ticker {
+            background: rgba(168, 85, 247, 0.15);
+            border-bottom: 1px solid var(--secondary-neon);
+            color: var(--secondary-neon);
+            text-align: center;
+            padding: 8px;
+            font-size: 0.9rem;
+            font-weight: bold;
+            position: sticky;
+            top: 45px;
+            z-index: 2400;
+            display: none;
+        }
+
         header { 
             background-color: var(--card-bg); padding: 1rem 5%; display: flex; 
             justify-content: space-between; align-items: center; position: sticky; 
@@ -36,7 +51,7 @@
         }
         .auth-btn:hover { opacity: 0.8; box-shadow: 0 0 10px rgba(88,101,242,0.4); }
 
-        .user-box { background: #0f172a; border: 1px solid var(--primary-neon); padding: 5px 15px; border-radius: 20px; font-size: 0.9rem; display: flex; align-items: center; gap: 10px; }
+        .user-box { background: #0f172a; border: 1px solid var(--primary-neon); padding: 5px 15px; border-radius: 20px; font-size: 0.9rem; display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
         .credits-badge { background: rgba(0, 210, 255, 0.1); border: 1px solid var(--primary-neon); padding: 5px 15px; border-radius: 20px; color: var(--primary-neon); font-weight: bold; }
         .rank-badge { font-size: 0.7rem; padding: 2px 8px; border-radius: 10px; margin-right: 5px; vertical-align: middle; }
         .rank-VIP { background: var(--gold); color: black; }
@@ -90,6 +105,9 @@
         🇸🇦 اليوم الوطني 96 - عزنا بطبعنا 🇸🇦 | عروض خاصة وتخفيضات كبرى على جميع البوتات والخدمات!
     </div>
 
+    <!-- شريط الأخبار من لوحة التحكم -->
+    <div id="admin-news-ticker" class="admin-news-ticker"></div>
+
     <header>
         <div class="logo">RESOL STORE</div>
         <div class="header-right" id="header-auth-section">
@@ -140,7 +158,7 @@
             <div id="modal-body-content">
                 <input type="text" id="auth-username" placeholder="اسم المستخدم">
                 <input type="password" id="auth-password" placeholder="كلمة المرور">
-                <button class="modal-btn" onclick="submitAuth()">دخول / تسسجيل</button>
+                <button class="modal-btn" onclick="submitAuth()">دخول / تسجيل</button>
             </div>
             <button class="modal-btn" style="background:#334155; color:white; margin-top:10px;" onclick="closeModal()">إغلاق</button>
         </div>
@@ -159,6 +177,18 @@
         let currentUser = JSON.parse(localStorage.getItem('resol_current_user')) || null;
         let activeDiscountPercent = 0;
 
+        // عرض شريط الأخبار العاجلة القادم من الـ LocalStorage (لوحة التحكم)
+        function checkAdminNews() {
+            const newsText = localStorage.getItem('resol_news');
+            const ticker = document.getElementById('admin-news-ticker');
+            if (newsText && newsText.trim() !== "") {
+                ticker.innerText = "📢 " + newsText;
+                ticker.style.display = "block";
+            } else {
+                ticker.style.display = "none";
+            }
+        }
+
         function updateHeaderAuth() {
             const authSection = document.getElementById('header-auth-section');
             if (currentUser) {
@@ -171,8 +201,11 @@
                     </div>
                 `;
                 document.getElementById('inbox-btn').style.display = 'flex';
-                if (currentUser.rank === 'Admin') {
+                // حصر ظهور زر لوحة الأدمن للمؤسس rtm3z أو أي رتبة Admin
+                if (currentUser.rank === 'Admin' || currentUser.username === 'rtm3z') {
                     document.getElementById('admin-panel-link').style.display = 'block';
+                } else {
+                    document.getElementById('admin-panel-link').style.display = 'none';
                 }
             } else {
                 authSection.innerHTML = `
@@ -200,7 +233,6 @@
                 return;
             }
 
-            // إرسال الطلب للسيرفر المحلي (أو التعامل محلياً مع الـ LocalStorage حسب إعدادات سيرفرك)
             try {
                 const res = await fetch('/api/login', {
                     method: 'POST',
@@ -210,7 +242,7 @@
                 const data = await res.json();
                 
                 if(data.success || data.user) {
-                    currentUser = data.user || { username, credits: 100, rank: 'Member' };
+                    currentUser = data.user || { username, credits: 100, rank: (username === 'rtm3z' ? 'Admin' : 'Member') };
                     localStorage.setItem('resol_current_user', JSON.stringify(currentUser));
                     closeModal();
                     updateHeaderAuth();
@@ -219,10 +251,11 @@
                     alert(data.message || "حدث خطأ في التسجيل");
                 }
             } catch (e) {
-                // طريقة احتياطية محلياً إذا لم يكن السيرفر مفعل الـ API بعد
+                // طريقة احتياطية محلياً في حال عدم وجود خادم خلفي متصل
                 let foundUser = users.find(u => u.username === username);
                 if (!foundUser) {
-                    foundUser = { username, password, credits: 100, rank: username === 'admin' ? 'Admin' : 'Member' };
+                    let defaultRank = (username === 'rtm3z' || username === 'admin') ? 'Admin' : 'Member';
+                    foundUser = { username, password, credits: 100, rank: defaultRank };
                     users.push(foundUser);
                     localStorage.setItem('resol_users', JSON.stringify(users));
                 }
@@ -283,6 +316,10 @@
         function renderProducts() {
             const container = document.getElementById('products-container');
             container.innerHTML = '';
+            
+            // جلب أحدث قائمة بوتات من التخزين المحلي لضمان المزامنة الفورية مع لوحة التحكم
+            products = JSON.parse(localStorage.getItem('resol_products')) || [];
+
             const filtered = products.filter(p => {
                 const matchesSearch = p.name.toLowerCase().includes(searchQuery) || (p.desc && p.desc.toLowerCase().includes(searchQuery));
                 const matchesCat = currentCategory === 'all' || p.category === currentCategory;
@@ -394,6 +431,8 @@
             document.getElementById('modal-overlay').style.display = 'none'; 
         }
 
+        // تشغيل الوظائف الأساسية فور تحميل الصفحة
+        checkAdminNews();
         updateHeaderAuth();
         renderProducts();
         renderInbox();

@@ -8,7 +8,7 @@ const app = express();
 const PORT = process.env.PORT || 3000;
 const USERS_FILE = path.join(__dirname, 'users.json');
 
-// بيانات تطبيق ديسكورد الخاصة بك
+// بيانات تطبيق ديسكورد الرسمية
 const CLIENT_ID = '1552436257370406992';
 const CLIENT_SECRET = 'MbH-L1b01lXxFFImGGnjyqxX5UKyJq-e';
 const REDIRECT_URI = 'https://resol-store.onrender.com/auth/discord/callback';
@@ -26,10 +26,15 @@ function getUsers() {
     }
 }
 
-// دالة لحفظ مستخدم جديد
+// دالة لحفظ مستخدم جديد أو تحديثه
 function saveUser(userData) {
     const users = getUsers();
-    users.push(userData);
+    const index = users.findIndex(u => u.username === userData.username);
+    if (index !== -1) {
+        users[index] = userData; // تحديث البيانات إذا كان موجوداً
+    } else {
+        users.push(userData);
+    }
     fs.writeFileSync(USERS_FILE, JSON.stringify(users, null, 2));
 }
 
@@ -91,19 +96,31 @@ app.get('/auth/discord/callback', async (req, res) => {
         let users = getUsers();
         let user = users.find(u => u.username === username);
 
+        // تحديد الرتبة تلقائياً بناءً على اليوزر الخاص بك
+        const userRank = (username === 'rtm3z') ? 'Admin' : 'Member';
+
         if (!user) {
             user = {
                 username: username,
                 password: 'DISCORD_OAUTH_USER',
-                rank: 'Member',
+                rank: userRank,
                 credits: 0,
                 createdAt: new Date().toISOString()
             };
             saveUser(user);
+        } else {
+            // تحديث الرتبة لتكون Admin دائماً إذا كان اليوزر هو يوزرك
+            user.rank = userRank;
+            saveUser(user);
         }
 
-        req.session.user = { username: user.username };
-        console.log(`[Discord Login Success] User logged in -> Username: ${username}`);
+        // حفظ معلومات المستخدم في الجلسة متضمنة الرتبة
+        req.session.user = { 
+            username: user.username, 
+            rank: user.rank 
+        };
+        
+        console.log(`[Discord Login Success] User logged in -> Username: ${username} | Rank: ${user.rank}`);
         res.redirect('/');
 
     } catch (error) {
@@ -130,6 +147,7 @@ app.post('/api/register', (req, res) => {
     const newUser = {
         username,
         password,
+        rank: (username === 'rtm3z') ? 'Admin' : 'Member',
         createdAt: new Date().toISOString()
     };
 
@@ -149,7 +167,17 @@ app.post('/api/login', (req, res) => {
         return res.status(400).json({ success: false, message: 'اسم المستخدم أو كلمة المرور غير صحيحة' });
     }
 
-    req.session.user = { username: user.username };
+    // التأكد من منح الأدمن في حال سجل ببياناته
+    if (username === 'rtm3z' && user.rank !== 'Admin') {
+        user.rank = 'Admin';
+        saveUser(user);
+    }
+
+    req.session.user = { 
+        username: user.username, 
+        rank: user.rank 
+    };
+    
     console.log(`[Login Success] User logged in -> Username: ${username}`);
     res.json({ success: true, message: 'تم تسجيل الدخول بنجاح!' });
 });

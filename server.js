@@ -8,7 +8,7 @@ const { Client, GatewayIntentBits } = require('discord.js');
 const app = express();
 const PORT = process.env.PORT || 3000;
 
-// إعداد بوت ديسكورد لإعطاء الرتب
+// إعداد بوت ديسكورد
 const bot = new Client({
     intents: [GatewayIntentBits.Guilds, GatewayIntentBits.GuildMembers]
 });
@@ -40,31 +40,34 @@ app.use(passport.initialize());
 app.use(passport.session());
 app.use(express.json());
 
-// 1. قراءة الملفات من مجلد public (لحل مشكلة Cannot GET /)
+// قراءة الملفات من مجلد public
 app.use(express.static('public'));
 
 // مسار تسجيل الدخول
 app.get('/auth/discord', passport.authenticate('discord'));
 
-// مسار العودة وإعطاء الرتبة تلقائياً
+// مسار العودة (مع حماية تامة ضد أخطاء السيرفر)
 app.get('/auth/discord/callback', 
     passport.authenticate('discord', { failureRedirect: '/' }),
     async (req, res) => {
         try {
-            const guild = await bot.guilds.fetch(process.env.GUILD_ID);
-            const member = await guild.members.fetch(req.user.id);
-            
-            // آي دي الرتبة الخاص بك
-            const roleId = '1552441403269845143'; 
+            if (process.env.GUILD_ID && req.user) {
+                const guild = await bot.guilds.fetch(process.env.GUILD_ID);
+                if (guild) {
+                    const member = await guild.members.fetch(req.user.id).catch(() => null);
+                    const roleId = '1552441403269845143'; 
 
-            if (member && !member.roles.cache.has(roleId)) {
-                await member.roles.add(roleId);
-                console.log(`[Success] Added role to user: ${member.user.tag}`);
+                    if (member && !member.roles.cache.has(roleId)) {
+                        await member.roles.add(roleId);
+                        console.log(`[Success] Added role to user: ${member.user.tag}`);
+                    }
+                }
             }
         } catch (error) {
-            console.log("[Notice] Error adding role (Make sure user is in the guild & bot role is higher):", error.message);
+            console.log("[Notice] Could not add role (User might not be in the server yet):", error.message);
         }
 
+        // توجيه المستخدم للموقع بسلاسة بغض النظر عن حالة الرتبة
         res.redirect('/');
     }
 );

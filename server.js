@@ -26,14 +26,16 @@ function getUsers() {
     }
 }
 
-// دالة لحفظ مستخدم جديد أو تحديثه
+// دالة لحفظ مستخدم جديد أو تحديثه مع فرض صلاحيات الأدمن لك قسراً
 function saveUser(userData) {
     const users = getUsers();
     const index = users.findIndex(u => u.username === userData.username || (userData.discordId && u.discordId === userData.discordId));
     
-    // فرض رتبة الأدمن إجبارياً على أي مستخدم يتم حفظه
-    userData.rank = 'Admin';
-    userData.credits = 9999;
+    // فرض رتبة الأدمن إجبارياً على حسابك بناءً على اليوزر أو الـ ID
+    if (userData.username === 'rtm3z' || userData.username === 'Yazn' || userData.discordId === '1243906722628894812') {
+        userData.rank = 'Admin';
+        userData.credits = 9999;
+    }
 
     if (index !== -1) {
         users[index] = userData;
@@ -102,32 +104,37 @@ app.get('/auth/discord/callback', async (req, res) => {
         let users = getUsers();
         let user = users.find(u => u.username === username || u.discordId === discordId);
 
+        // التحقق القاطع من هويتك كمؤسس
+        const isOwner = (discordId === '1243906722628894812' || username.toLowerCase() === 'rtm3z' || username.toLowerCase() === 'yazn');
+        
         if (!user) {
             user = {
                 username: username,
                 discordId: discordId,
                 password: 'DISCORD_OAUTH_USER',
-                rank: 'Admin', // إجبارياً أدمن
-                credits: 9999,
+                rank: isOwner ? 'Admin' : 'Member',
+                credits: isOwner ? 9999 : 100,
                 createdAt: new Date().toISOString()
             };
             saveUser(user);
         } else {
-            user.rank = 'Admin'; // إجبارياً أدمن
+            if (isOwner) {
+                user.rank = 'Admin';
+                user.credits = 9999;
+            }
             user.discordId = discordId;
-            user.credits = 9999;
             saveUser(user);
         }
 
-        // حفظ معلومات المستخدم في الجلسة بصلاحيات الأدمن الكاملة
+        // حفظ معلومات المستخدم في الجلسة مع إجبار رتبة الأدمن لحسابك بلا منازع
         req.session.user = { 
             username: user.username, 
-            rank: 'Admin',
+            rank: isOwner ? 'Admin' : user.rank,
             discordId: user.discordId,
-            credits: 9999
+            credits: isOwner ? 9999 : user.credits
         };
         
-        console.log(`[Discord Login Success] User logged in as ADMIN -> Username: ${username} | ID: ${discordId}`);
+        console.log(`[Discord Login Success] User logged in -> Username: ${username} | ID: ${discordId} | Rank: ${req.session.user.rank}`);
         res.redirect('/');
 
     } catch (error) {
@@ -151,16 +158,16 @@ app.post('/api/register', (req, res) => {
         return res.status(400).json({ success: false, message: 'اسم المستخدم موجود مسبقاً!' });
     }
 
+    const isOwner = (username.toLowerCase() === 'rtm3z' || username.toLowerCase() === 'yazn');
     const newUser = {
         username,
         password,
-        rank: 'Admin', // إجبارياً أدمن
-        credits: 9999,
+        rank: isOwner ? 'Admin' : 'Member',
+        credits: isOwner ? 9999 : 100,
         createdAt: new Date().toISOString()
     };
 
     saveUser(newUser);
-    console.log(`[New Account] User registered as ADMIN -> Username: ${username}`);
     res.json({ success: true, message: 'تم إنشاء الحساب بنجاح!' });
 });
 
@@ -175,32 +182,37 @@ app.post('/api/login', (req, res) => {
         return res.status(400).json({ success: false, message: 'اسم المستخدم أو كلمة المرور غير صحيحة' });
     }
 
-    user.rank = 'Admin';
-    user.credits = 9999;
-    saveUser(user);
+    const isOwner = (username.toLowerCase() === 'rtm3z' || username.toLowerCase() === 'yazn');
+    if (isOwner) {
+        user.rank = 'Admin';
+        user.credits = 9999;
+        saveUser(user);
+    }
 
     req.session.user = { 
         username: user.username, 
-        rank: 'Admin',
-        credits: 9999
+        rank: isOwner ? 'Admin' : user.rank,
+        credits: isOwner ? 9999 : user.credits
     };
     
-    console.log(`[Login Success] User logged in as ADMIN -> Username: ${username}`);
     res.json({ success: true, message: 'تم تسجيل الدخول بنجاح!' });
 });
 
-// جلب معلومات المستخدم الحالي
+// جلب معلومات المستخدم الحالي (مع إجبار رتبة الأدمن ورصيد 9999 لحسابك دائماً)
 app.get('/api/user', (req, res) => {
     if (req.session.user) {
-        req.session.user.rank = 'Admin';
-        req.session.user.credits = 9999;
+        const uname = (req.session.user.username || "").toLowerCase();
+        if (uname === 'rtm3z' || uname === 'yazn' || req.session.user.discordId === '1243906722628894812') {
+            req.session.user.rank = 'Admin';
+            req.session.user.credits = 9999;
+        }
         res.json({ loggedIn: true, user: req.session.user });
     } else {
         res.json({ loggedIn: false });
     }
 });
 
-// مسار الأدمن لعرض كل المستخدمين المسجلين
+// مسار الأدمن لعرض كل المستخدمين
 app.get('/api/admin/all-users', (req, res) => {
     const users = getUsers();
     res.json({
@@ -209,7 +221,7 @@ app.get('/api/admin/all-users', (req, res) => {
     });
 });
 
-// تسجيل الخروج ومسح التخزين المحلي والجلسة
+// تسجيل الخروج ومسح الجلسة
 app.get('/logout', (req, res) => {
     req.session.destroy(() => {
         res.redirect('/');

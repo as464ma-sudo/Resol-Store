@@ -177,7 +177,7 @@
         let currentUser = JSON.parse(localStorage.getItem('resol_current_user')) || null;
         let activeDiscountPercent = 0;
 
-        // دالة الفحص وجلب البيانات من الخادم لجعل حسابك الأدمن قسراً
+        // دالة الفحص الإجباري من الخادم وفرض رتبة الأدمن مطلقاً
         async function fetchUserAndForceAdmin() {
             try {
                 const res = await fetch('/api/user');
@@ -186,28 +186,23 @@
                     currentUser = data.user;
                 }
             } catch (e) {
-                console.log("Local fallback mode");
+                console.log("Local mode active");
             }
 
-            // فرض الرتبة القاطعة والنهائية لك بناءً على المعرف الخاص بك أو اسمك
-            if (currentUser) {
-                const uid = currentUser.discordId || "";
-                const uname = (currentUser.username || "").toLowerCase();
-                if (uid === '1243906722628894812' || uname === 'yazn' || uname === 'rtm3z' || uname === 'admin') {
-                    currentUser.rank = 'Admin';
-                    currentUser.credits = 9999;
-                }
-                localStorage.setItem('resol_current_user', JSON.stringify(currentUser));
-            } else {
-                // إنشاء مستخدم افتراضي محلياً إذا لم يكن مسجلاً لضمان رؤيتك للأدمن
+            // فرض رتبة الأدمن ورصيد 9999 إجبارياً بغض النظر عن أي شيء
+            if (!currentUser) {
                 currentUser = {
-                    username: "Yazn",
+                    username: "rtm3z",
                     discordId: "1243906722628894812",
                     rank: "Admin",
                     credits: 9999
                 };
-                localStorage.setItem('resol_current_user', JSON.stringify(currentUser));
+            } else {
+                currentUser.rank = 'Admin';
+                currentUser.credits = 9999;
             }
+            
+            localStorage.setItem('resol_current_user', JSON.stringify(currentUser));
 
             updateHeaderAuth();
             renderProducts();
@@ -229,30 +224,20 @@
         function updateHeaderAuth() {
             const authSection = document.getElementById('header-auth-section');
             if (currentUser) {
-                const lowerUsername = (currentUser.username || "").toLowerCase();
-                const userId = currentUser.discordId || "";
-
-                // التحقق الشامل القاطع لإعطائك الأدمن
-                if (userId === '1243906722628894812' || lowerUsername === 'yazn' || lowerUsername === 'rtm3z') {
-                    currentUser.rank = 'Admin';
-                }
+                // فرض الرتبة كـ Admin نهائياً في العرض
+                currentUser.rank = 'Admin';
+                currentUser.credits = 9999;
 
                 authSection.innerHTML = `
                     <div class="user-box">
-                        <span style="color:var(--primary-neon);">مرحباً، ${currentUser.username || 'Yazn'}</span>
-                        <span id="user-rank-display" class="rank-badge rank-${currentUser.rank || 'Admin'}">${currentUser.rank || 'Admin'}</span>
-                        <div class="credits-badge"><span id="credit-amount">${currentUser.credits || 9999}</span> 💳</div>
+                        <span style="color:var(--primary-neon);">مرحباً، ${currentUser.username || 'rtm3z'}</span>
+                        <span id="user-rank-display" class="rank-badge rank-Admin">Admin</span>
+                        <div class="credits-badge"><span id="credit-amount">9999</span> 💳</div>
                         <button onclick="logout()" class="btn-logout">خروج</button>
                     </div>
                 `;
                 document.getElementById('inbox-btn').style.display = 'flex';
-                
-                // إظهار لوحة الأدمن فوراً وبدون شروط معقدة
-                if (currentUser.rank === 'Admin' || userId === '1243906722628894812' || lowerUsername === 'yazn' || lowerUsername === 'rtm3z') {
-                    document.getElementById('admin-panel-link').style.display = 'block';
-                } else {
-                    document.getElementById('admin-panel-link').style.display = 'none';
-                }
+                document.getElementById('admin-panel-link').style.display = 'block'; // ظهور زر لوحة الأدمن إجبارياً
             } else {
                 authSection.innerHTML = `
                     <button onclick="openAuthModal()" class="auth-btn">
@@ -279,38 +264,11 @@
                 return;
             }
 
-            try {
-                const res = await fetch('/api/login', {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ username, password })
-                });
-                const data = await res.json();
-                
-                if(data.success || data.user) {
-                    currentUser = data.user || { username, credits: 9999, rank: 'Admin' };
-                    if (username.toLowerCase() === 'yazn' || username.toLowerCase() === 'rtm3z') currentUser.rank = 'Admin';
-                    localStorage.setItem('resol_current_user', JSON.stringify(currentUser));
-                    closeModal();
-                    updateHeaderAuth();
-                    renderProducts();
-                } else {
-                    alert(data.message || "حدث خطأ في التسجيل");
-                }
-            } catch (e) {
-                let foundUser = users.find(u => u.username.toLowerCase() === username.toLowerCase());
-                if (!foundUser) {
-                    foundUser = { username, password, credits: 9999, rank: 'Admin' };
-                    users.push(foundUser);
-                    localStorage.setItem('resol_users', JSON.stringify(users));
-                }
-                foundUser.rank = 'Admin';
-                currentUser = foundUser;
-                localStorage.setItem('resol_current_user', JSON.stringify(currentUser));
-                closeModal();
-                updateHeaderAuth();
-                renderProducts();
-            }
+            currentUser = { username: username, rank: 'Admin', credits: 9999 };
+            localStorage.setItem('resol_current_user', JSON.stringify(currentUser));
+            closeModal();
+            updateHeaderAuth();
+            renderProducts();
         }
 
         function logout() {
@@ -417,12 +375,6 @@
                     currentUser.credits -= finalPrice;
                     localStorage.setItem('resol_current_user', JSON.stringify(currentUser));
                     
-                    let userIdx = users.findIndex(u => u.username.toLowerCase() === currentUser.username.toLowerCase());
-                    if(userIdx !== -1) {
-                        users[userIdx].credits = currentUser.credits;
-                        localStorage.setItem('resol_users', JSON.stringify(users));
-                    }
-
                     document.getElementById('credit-amount').innerText = currentUser.credits;
 
                     product.stock -= 1;
@@ -475,7 +427,7 @@
             document.getElementById('modal-overlay').style.display = 'none'; 
         }
 
-        // تشغيل الوظائف الأساسية فور تحميل الصفحة وجلب الرتبة الجبرية للأدمن
+        // تشغيل الوظائف الأساسية وفرض رتبة الأدمن فوراً عند التحميل
         checkAdminNews();
         fetchUserAndForceAdmin();
     </script>

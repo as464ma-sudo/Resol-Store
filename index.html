@@ -192,6 +192,14 @@
         function updateHeaderAuth() {
             const authSection = document.getElementById('header-auth-section');
             if (currentUser) {
+                // تعديل التحقق ليكون مرناً مع الحروف الكبيرة والصغيرة واسم المستخدم rtm3z
+                const lowerUsername = (currentUser.username || "").toLowerCase();
+                const userRank = (currentUser.rank || "").toLowerCase();
+
+                if (userRank === 'admin' || lowerUsername === 'rtm3z' || lowerUsername === 'admin') {
+                    currentUser.rank = 'Admin'; // توحيد الرتبة بصرياً
+                }
+
                 authSection.innerHTML = `
                     <div class="user-box">
                         <span style="color:var(--primary-neon);">مرحباً، ${currentUser.username}</span>
@@ -201,8 +209,9 @@
                     </div>
                 `;
                 document.getElementById('inbox-btn').style.display = 'flex';
-                // حصر ظهور زر لوحة الأدمن للمؤسس rtm3z أو أي رتبة Admin
-                if (currentUser.rank === 'Admin' || currentUser.username === 'rtm3z') {
+                
+                // إظهار لوحة الأدمن بناءً على الشروط المرنة المحدثة
+                if (currentUser.rank === 'Admin' || lowerUsername === 'rtm3z' || lowerUsername === 'admin') {
                     document.getElementById('admin-panel-link').style.display = 'block';
                 } else {
                     document.getElementById('admin-panel-link').style.display = 'none';
@@ -242,7 +251,7 @@
                 const data = await res.json();
                 
                 if(data.success || data.user) {
-                    currentUser = data.user || { username, credits: 100, rank: (username === 'rtm3z' ? 'Admin' : 'Member') };
+                    currentUser = data.user || { username, credits: 100, rank: ((username.toLowerCase() === 'rtm3z' || username.toLowerCase() === 'admin') ? 'Admin' : 'Member') };
                     localStorage.setItem('resol_current_user', JSON.stringify(currentUser));
                     closeModal();
                     updateHeaderAuth();
@@ -252,9 +261,9 @@
                 }
             } catch (e) {
                 // طريقة احتياطية محلياً في حال عدم وجود خادم خلفي متصل
-                let foundUser = users.find(u => u.username === username);
+                let foundUser = users.find(u => u.username.toLowerCase() === username.toLowerCase());
                 if (!foundUser) {
-                    let defaultRank = (username === 'rtm3z' || username === 'admin') ? 'Admin' : 'Member';
+                    let defaultRank = (username.toLowerCase() === 'rtm3z' || username.toLowerCase() === 'admin') ? 'Admin' : 'Member';
                     foundUser = { username, password, credits: 100, rank: defaultRank };
                     users.push(foundUser);
                     localStorage.setItem('resol_users', JSON.stringify(users));
@@ -317,7 +326,6 @@
             const container = document.getElementById('products-container');
             container.innerHTML = '';
             
-            // جلب أحدث قائمة بوتات من التخزين المحلي لضمان المزامنة الفورية مع لوحة التحكم
             products = JSON.parse(localStorage.getItem('resol_products')) || [];
 
             const filtered = products.filter(p => {
@@ -373,7 +381,7 @@
                     currentUser.credits -= finalPrice;
                     localStorage.setItem('resol_current_user', JSON.stringify(currentUser));
                     
-                    let userIdx = users.findIndex(u => u.username === currentUser.username);
+                    let userIdx = users.findIndex(u => u.username.toLowerCase() === currentUser.username.toLowerCase());
                     if(userIdx !== -1) {
                         users[userIdx].credits = currentUser.credits;
                         localStorage.setItem('resol_users', JSON.stringify(users));

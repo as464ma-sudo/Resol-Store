@@ -8,10 +8,10 @@ const app = express();
 const PORT = process.env.PORT || 3000;
 const USERS_FILE = path.join(__dirname, 'users.json');
 
-// بيانات تطبيق ديسكورد (تأكد من وضعها هنا أو في ملف .env)
-const CLIENT_ID = process.env.DISCORD_CLIENT_ID || 'رقم_الـ_Client_ID_هنا';
-const CLIENT_SECRET = process.env.DISCORD_CLIENT_SECRET || 'رقم_الـ_Client_Secret_هنا';
-const REDIRECT_URI = process.env.DISCORD_REDIRECT_URI || 'https://resol-store.onrender.com/auth/discord/callback';
+// بيانات تطبيق ديسكورد الخاصة بك
+const CLIENT_ID = '1552436257370406992';
+const CLIENT_SECRET = 'MbH-L1b01lXxFFImGGnjyqxX5UKyJq-e';
+const REDIRECT_URI = 'https://resol-store.onrender.com/auth/discord/callback';
 
 // دالة لقراءة المستخدمين المخزنين
 function getUsers() {
@@ -42,7 +42,7 @@ app.use(session({
     saveUninitialized: false
 }));
 
-// قراءة الملفات من مجلد public
+// قراءة الملفات الثابتة من مجلد public
 app.use(express.static('public'));
 
 // ==========================================

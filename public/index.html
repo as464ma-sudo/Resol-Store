@@ -1,0 +1,387 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Resol Store | المتجر الذكي - عروض اليوم الوطني 96</title>
+    <style>
+        :root {
+            --bg-color: #0f172a; --card-bg: #1e293b; --primary-neon: #00d2ff;
+            --secondary-neon: #a855f7; --success-color: #22c55e; --error-color: #ef4444;
+            --text-main: #e2e8f0; --text-dim: #94a3b8;
+            --gold: #fbbf24; --pink: #ec4899;
+            --national-green: #006C35;
+        }
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+        body { background-color: var(--bg-color); font-family: 'Segoe UI', sans-serif; color: var(--text-main); line-height: 1.6; overflow-x: hidden; }
+
+        .national-banner {
+            background: linear-gradient(90deg, var(--national-green), #112211);
+            color: white;
+            text-align: center;
+            padding: 12px;
+            font-weight: bold;
+            font-size: 1rem;
+            box-shadow: 0 0 15px rgba(0, 108, 53, 0.6);
+            border-bottom: 2px solid var(--national-green);
+            position: sticky;
+            top: 0;
+            z-index: 2500;
+        }
+
+        header { 
+            background-color: var(--card-bg); padding: 1rem 5%; display: flex; 
+            justify-content: space-between; align-items: center; position: sticky; 
+            top: 45px; z-index: 1000; border-bottom: 2px solid var(--primary-neon); 
+        }
+        .logo { font-size: 1.5rem; font-weight: bold; color: var(--primary-neon); }
+        .header-right { display: flex; align-items: center; gap: 15px; }
+        
+        .discord-login-btn {
+            background: #5865F2; color: white; padding: 8px 16px; border-radius: 8px;
+            text-decoration: none; font-weight: bold; font-size: 0.9rem; display: flex; align-items: center; gap: 8px; transition: 0.3s;
+        }
+        .discord-login-btn:hover { background: #4752C4; box-shadow: 0 0 10px rgba(88,101,242,0.4); }
+
+        .user-box { background: #0f172a; border: 1px solid var(--primary-neon); padding: 5px 15px; border-radius: 20px; font-size: 0.9rem; display: flex; align-items: center; gap: 10px; }
+        
+        .credits-badge { background: rgba(0, 210, 255, 0.1); border: 1px solid var(--primary-neon); padding: 5px 15px; border-radius: 20px; color: var(--primary-neon); font-weight: bold; }
+        .rank-badge { font-size: 0.7rem; padding: 2px 8px; border-radius: 10px; margin-right: 5px; vertical-align: middle; }
+        .rank-VIP { background: var(--gold); color: black; }
+        .rank-Admin { background: var(--secondary-neon); color: white; }
+        .btn-logout { color: var(--error-color); text-decoration: none; font-weight: bold; font-size: 0.85rem; }
+
+        .hero { padding: 40px 5%; text-align: center; background: linear-gradient(135deg, #1e293b 0%, #0f172a 100%); }
+        .controls { max-width: 1200px; margin: 20px auto; padding: 0 20px; display: flex; flex-direction: column; gap: 15px; align-items: center; }
+        .search-bar { width: 100%; max-width: 500px; padding: 12px 20px; border-radius: 25px; border: 1px solid var(--primary-neon); background: var(--card-bg); color: white; outline: none; }
+        
+        .coupon-section { background: var(--card-bg); border: 1px solid var(--national-green); padding: 15px 25px; border-radius: 15px; display: flex; gap: 10px; width: 100%; max-width: 500px; align-items: center; box-shadow: 0 0 15px rgba(0,108,53,0.2); }
+        .coupon-section input { flex: 1; padding: 10px; border-radius: 8px; border: 1px solid #334155; background: var(--bg-color); color: white; outline: none; }
+        .coupon-section button { padding: 10px 20px; border-radius: 8px; border: none; background: var(--national-green); color: white; font-weight: bold; cursor: pointer; transition: 0.3s; }
+        .coupon-section button:hover { opacity: 0.8; }
+
+        .categories { display: flex; gap: 10px; flex-wrap: wrap; justify-content: center; }
+        .cat-btn { padding: 8px 20px; border-radius: 20px; border: 1px solid var(--text-dim); background: transparent; color: var(--text-dim); cursor: pointer; transition: 0.3s; }
+        .cat-btn.active { background: var(--primary-neon); color: var(--bg-color); border-color: var(--primary-neon); }
+
+        .container { display: flex; flex-wrap: wrap; gap: 25px; justify-content: center; max-width: 1200px; margin: 0 auto 50px; padding: 0 20px; }
+        .card { width: 260px; background: var(--card-bg); border-radius: 15px; border: 1px solid #334155; padding: 20px; text-align: center; transition: 0.3s; position: relative; }
+        .card:hover { transform: translateY(-10px); border-color: var(--primary-neon); box-shadow: 0 0 20px rgba(0, 210, 255, 0.2); }
+        .card img { width: 70px; height: 70px; border-radius: 50%; border: 2px solid var(--primary-neon); margin-bottom: 15px; object-fit: cover; }
+        .card h2 { font-size: 1.3rem; margin-bottom: 10px; }
+        .card p { font-size: 0.85rem; color: var(--text-dim); height: 40px; margin-bottom: 15px; overflow: hidden; }
+        .price { display: block; font-size: 1.4rem; font-weight: bold; color: var(--primary-neon); margin-bottom: 15px; }
+        .old-price { text-decoration: line-through; color: var(--text-dim); font-size: 1rem; margin-left: 5px; }
+        .stock-tag { font-size: 0.75rem; color: var(--text-dim); margin-bottom: 10px; display: block; }
+
+        .btn { width: 100%; padding: 10px; border-radius: 8px; border: none; font-weight: bold; cursor: pointer; transition: 0.3s; text-transform: uppercase; }
+        .btn-cyan { background: var(--primary-neon); color: var(--bg-color); }
+        .btn-purple { background: var(--secondary-neon); color: white; }
+        .btn-green { background: var(--success-color); color: white; }
+        .btn-gold { background: var(--gold); color: var(--bg-color); }
+        .btn:disabled { background: #475269; cursor: not-allowed; transform: none; }
+
+        .modal-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0, 0, 0, 0.8); display: none; justify-content: center; align-items: center; z-index: 2000; backdrop-filter: blur(5px); }
+        .modal { background: var(--card-bg); padding: 30px; border-radius: 15px; text-align: center; max-width: 350px; width: 90%; border: 2px solid var(--primary-neon); }
+        .modal-btn { margin-top: 20px; padding: 8px 25px; border-radius: 5px; border: none; cursor: pointer; background: #334155; color: white; }
+
+        #inbox-btn { position: fixed; bottom: 20px; left: 20px; background: var(--secondary-neon); width: 50px; height: 50px; display: flex; justify-content: center; align-items: center; border-radius: 50%; cursor: pointer; box-shadow: 0 0 15px var(--secondary-neon); z-index: 1001; font-size: 1.2rem; display: none; }
+        .inbox-modal { position: fixed; bottom: 80px; left: 20px; width: 300px; background: var(--card-bg); border: 1px solid var(--secondary-neon); border-radius: 10px; display: none; flex-direction: column; z-index: 1001; overflow: hidden; }
+        .inbox-header { background: var(--secondary-neon); padding: 10px; font-weight: bold; text-align: center; color: white; }
+        .inbox-content { max-height: 200px; overflow-y: auto; padding: 10px; font-size: 0.85rem; }
+        .message-item { background: #0f172a; padding: 8px; border-radius: 5px; margin-bottom: 5px; border-right: 3px solid var(--secondary-neon); }
+
+        .admin-link-floating { position: fixed; bottom: 20px; right: 20px; background: var(--primary-neon); color: var(--bg-color); padding: 10px 15px; border-radius: 25px; font-weight: bold; text-decoration: none; box-shadow: 0 0 15px rgba(0, 210, 255, 0.4); z-index: 1001; display: none; font-size: 0.85rem; }
+
+        footer { text-align: center; padding: 20px; color: var(--text-dim); font-size: 0.8rem; }
+    </style>
+</head>
+<body>
+
+    <div class="national-banner">
+        🇸🇦 اليوم الوطني 96 - عزنا بطبعنا 🇸🇦 | عروض خاصة وتخفيضات كبرى على جميع البوتات والخدمات!
+    </div>
+
+    <header>
+        <div class="logo">RESOL STORE</div>
+        <div class="header-right" id="header-auth-section">
+            <a href="/auth/discord" class="discord-login-btn">
+                <span>🎮 تسجيل الدخول بـ Discord</span>
+            </a>
+        </div>
+    </header>
+
+    <section class="hero">
+        <h1>متجر البوتات الذكي</h1>
+        <p>بوابتك للحصول على أقوى بوتات الديسكورد مع منح الرتبة تلقائياً</p>
+    </section>
+
+    <div class="controls">
+        <input type="text" id="search-input" class="search-bar" placeholder="ابحث عن بوت...">
+        
+        <div class="coupon-section">
+            <input type="text" id="user-coupon-input" placeholder="أدخل كود الخصم (مثال: KSA96)">
+            <button onclick="applyUserCoupon()">تطبيق</button>
+        </div>
+        <p id="coupon-feedback" style="font-size: 0.85rem; font-weight: bold;"></p>
+
+        <div class="categories" id="category-filters">
+            <button class="cat-btn active" onclick="filterByCategory('all')">الكل</button>
+            <button class="cat-btn" onclick="filterByCategory('حماية')">حماية</button>
+            <button class="cat-btn" onclick="filterByCategory('ألعاب')">ألعاب</button>
+            <button class="cat-btn" onclick="filterByCategory('موسيقى')">موسيقى</button>
+            <button class="cat-btn" onclick="filterByCategory('أخرى')">أخرى</button>
+        </div>
+    </div>
+
+    <div class="container" id="products-container"></div>
+
+    <div id="inbox-btn" onclick="toggleInbox()">📩</div>
+    <div class="inbox-modal" id="inbox-modal">
+        <div class="inbox-header">الرسائل الخاصة (Inbox)</div>
+        <div class="inbox-content" id="inbox-messages">
+            <p style="text-align: center; color: var(--text-dim);">لا توجد رسائل جديدة</p>
+        </div>
+    </div>
+
+    <a href="admin.html" id="admin-panel-link" class="admin-link-floating">⚙️ لوحة الأدمن</a>
+
+    <div class="modal-overlay" id="modal-overlay">
+        <div class="modal" id="modal-box">
+            <h2 id="modal-title">عنوان</h2>
+            <p id="modal-message">الرسالة</p>
+            <button class="modal-btn" onclick="closeModal()">إغلاق</button>
+        </div>
+    </div>
+
+    <footer>&copy; 2026 Resol Store - جميع الحقوق محفوظة</footer>
+
+    <script>
+        // تم تحديث المفتاح هنا ليتطابق مع لوحة التحكم (Resol Store)
+        let products = JSON.parse(localStorage.getItem('resol_products')) || [];
+        let users = JSON.parse(localStorage.getItem('resol_users')) || [];
+        let messages = JSON.parse(localStorage.getItem('resol_messages')) || [];
+        let orders = JSON.parse(localStorage.getItem('resol_orders')) || [];
+        let news = localStorage.getItem('resol_news') || "";
+        
+        let currentCategory = 'all';
+        let searchQuery = "";
+        let currentUser = null;
+        let activeDiscountPercent = 0;
+
+        fetch('/api/user')
+            .then(res => res.json())
+            .then(data => {
+                if (data.loggedIn) {
+                    const discordUser = data.user;
+                    
+                    currentUser = users.find(u => u.username === discordUser.username || u.id === discordUser.id);
+                    if (!currentUser) {
+                        currentUser = { 
+                            id: discordUser.id, 
+                            username: discordUser.username,
+                            credits: 100, 
+                            rank: 'Member' 
+                        };
+                        users.push(currentUser);
+                        localStorage.setItem('resol_users', JSON.stringify(users));
+                    } else {
+                        currentUser.username = discordUser.username;
+                        localStorage.setItem('resol_users', JSON.stringify(users));
+                    }
+
+                    document.getElementById('header-auth-section').innerHTML = `
+                        <div class="user-box">
+                            <span style="color:var(--primary-neon);">مرحباً، ${discordUser.username}</span>
+                            <span id="user-rank-display" class="rank-badge rank-${currentUser.rank}">${currentUser.rank}</span>
+                            <div class="credits-badge"><span id="credit-amount">${currentUser.credits}</span> 💳</div>
+                            <a href="/logout" class="btn-logout">خروج</a>
+                        </div>
+                    `;
+
+                    document.getElementById('inbox-btn').style.display = 'flex';
+
+                    if (currentUser.rank === 'Admin') {
+                        document.getElementById('admin-panel-link').style.display = 'block';
+                    }
+                } else {
+                    document.getElementById('header-auth-section').innerHTML = `
+                        <a href="/auth/discord" class="discord-login-btn">
+                            <span>🎮 تسجيل الدخول بـ Discord</span>
+                        </a>
+                    `;
+                    document.getElementById('inbox-btn').style.display = 'none';
+                }
+            })
+            .catch(err => console.log("Error fetching user session:", err));
+
+        document.getElementById('search-input').addEventListener('input', (e) => {
+            searchQuery = e.target.value.toLowerCase();
+            renderProducts();
+        });
+
+        function filterByCategory(cat) {
+            currentCategory = cat;
+            document.querySelectorAll('.cat-btn').forEach(btn => {
+                btn.classList.remove('active');
+                if(btn.innerText === (cat === 'all' ? 'الكل' : cat)) btn.classList.add('active');
+            });
+            renderProducts();
+        }
+
+        function applyUserCoupon() {
+            let code = document.getElementById('user-coupon-input').value.trim().toUpperCase();
+            let feedback = document.getElementById('coupon-feedback');
+            
+            let detailedCoupons = JSON.parse(localStorage.getItem('resol_coupons_detailed')) || {};
+            const today = new Date().toISOString().split('T')[0];
+
+            if (code === "") {
+                activeDiscountPercent = 0;
+                feedback.innerText = "";
+                renderProducts();
+                return;
+            }
+
+            if (detailedCoupons[code] && detailedCoupons[code].expiry >= today) {
+                activeDiscountPercent = detailedCoupons[code].discount;
+                feedback.style.color = "var(--success-color)";
+                feedback.innerText = `✅ تم تطبيق الكود [${code}] بنجاح! نسبة الخصم: ${activeDiscountPercent}%`;
+            } else {
+                activeDiscountPercent = 0;
+                feedback.style.color = "var(--error-color)";
+                feedback.innerText = "❌ الكود غير صحيح أو منتهي الصلاحية.";
+            }
+            renderProducts();
+        }
+
+        function renderProducts() {
+            const container = document.getElementById('products-container');
+            container.innerHTML = '';
+            const filtered = products.filter(p => {
+                const matchesSearch = p.name.toLowerCase().includes(searchQuery) || (p.desc && p.desc.toLowerCase().includes(searchQuery));
+                const matchesCat = currentCategory === 'all' || p.category === currentCategory;
+                return matchesSearch && matchesCat;
+            });
+
+            if (filtered.length === 0) {
+                container.innerHTML = '<p style="color: var(--text-dim);">لا توجد بوتات مطابقة بحثك أو أن المتجر فارغ حالياً.</p>';
+                return;
+            }
+
+            filtered.forEach((product) => {
+                const originalIndex = products.findIndex(p => p === product);
+                const isOutOfStock = product.stock <= 0;
+
+                let finalDiscount = activeDiscountPercent;
+                if (currentUser && currentUser.rank === 'VIP' && finalDiscount < 50) {
+                    finalDiscount = 50;
+                }
+
+                let discountedPrice = Math.round(product.price * (1 - (finalDiscount / 100)));
+
+                const card = document.createElement('div');
+                card.className = 'card';
+                card.innerHTML = `
+                    <img src="${product.img || 'https://via.placeholder.com/70'}" alt="${product.name}">
+                    <h2>${product.name}</h2>
+                    <p>${product.desc || 'لا يوجد وصف'}</p>
+                    <span class="stock-tag">${isOutOfStock ? '<span style="color:var(--error-color)">نفذت الكمية!</span>' : 'المخزون: ' + product.stock}</span>
+                    <span class="price">
+                        ${finalDiscount > 0 ? `<span class="old-price">${product.price} 💳</span>` : ''}
+                        ${discountedPrice} 💳
+                        ${finalDiscount > 0 ? `<br><span style="font-size:0.7rem; color:var(--gold);">[خصم ${finalDiscount}%]</span>` : ''}
+                    </span>
+                    <button class="btn ${product.color || 'btn-cyan'}" ${isOutOfStock ? 'disabled' : ''} onclick="handleOrder(${originalIndex}, ${discountedPrice})">
+                        ${isOutOfStock ? 'غير متوفر' : 'اطلب الآن'}
+                    </button>
+                `;
+                container.appendChild(card);
+            });
+        }
+
+        function handleOrder(index, finalPrice) {
+            if (!currentUser) {
+                showModal("🔒 تنبيه تسجيل الدخول", "عذراً، لا يمكنك إتمام الشراء حتى تقوم بتسجيل الدخول عبر ديسكورد أولاً!", "#ef4444");
+                setTimeout(() => {
+                    window.location.href = '/auth/discord';
+                }, 2000);
+                return;
+            }
+
+            const product = products[index];
+            if (currentUser.credits >= finalPrice) {
+                if (product.stock > 0) {
+                    const userIdx = users.findIndex(u => u.username === currentUser.username);
+                    if (userIdx !== -1) {
+                        users[userIdx].credits -= finalPrice;
+                        currentUser = users[userIdx];
+                        localStorage.setItem('resol_users', JSON.stringify(users));
+                        document.getElementById('credit-amount').innerText = currentUser.credits;
+                    }
+
+                    product.stock -= 1;
+                    localStorage.setItem('resol_products', JSON.stringify(products));
+                    
+                    const newOrder = {
+                        username: currentUser.username,
+                        botName: product.name,
+                        price: finalPrice + " 💳",
+                        time: new Date().toLocaleTimeString()
+                    };
+                    orders.unshift(newOrder);
+                    localStorage.setItem('resol_orders', JSON.stringify(orders));
+
+                    const newMessage = {
+                        from: "المنظومة",
+                        text: `تم شراء ${product.name} بنجاح بسعر ${finalPrice} كريدت! سيتم التواصل معك قريباً.`,
+                        time: new Date().toLocaleTimeString()
+                    };
+                    messages.unshift(newMessage);
+                    localStorage.setItem('resol_messages', JSON.stringify(messages));
+
+                    renderProducts();
+                    renderInbox();
+                    showModal("✅ تم الشراء بنجاح!", `مبروك! اشتريت ${product.name}. تحقق من رسائلك (Inbox).`, "#22c55e");
+                }
+            } else {
+                showModal("❌ رصيد غير كافٍ", `تحتاج إلى ${finalPrice - currentUser.credits} كريدت إضافي لإتمام الشراء.`, "#ef4444");
+            }
+        }
+
+        function renderInbox() {
+            const inboxList = document.getElementById('inbox-messages');
+            if (messages.length === 0) {
+                inboxList.innerHTML = '<p style="text-align: center; color: var(--text-dim);">لا توجد رسائل</p>';
+                return;
+            }
+            inboxList.innerHTML = messages.map(m => `
+                <div class="message-item">
+                    <div style="font-weight:bold; font-size:0.7rem; color:var(--primary-neon)">${m.from} [${m.time}]</div>
+                    <div>${m.text}</div>
+                </div>
+            `).join('');
+        }
+
+        function toggleInbox() {
+            const inbox = document.getElementById('inbox-modal');
+            inbox.style.display = (inbox.style.display === 'flex') ? 'none' : 'flex';
+        }
+
+        function showModal(title, msg, color) {
+            const overlay = document.getElementById('modal-overlay');
+            const box = document.getElementById('modal-box');
+            document.getElementById('modal-title').innerText = title;
+            document.getElementById('modal-title').style.color = color;
+            document.getElementById('modal-message').innerText = msg;
+            box.style.borderColor = color;
+            overlay.style.display = 'flex';
+        }
+
+        function closeModal() { document.getElementById('modal-overlay').style.display = 'none'; }
+
+        renderProducts();
+        renderInbox();
+    </script>
+</body>
+</html>

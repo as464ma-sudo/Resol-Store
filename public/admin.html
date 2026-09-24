@@ -1,0 +1,377 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Admin Command Center | لوحة التحكم</title>
+    <style>
+        :root {
+            --bg-color: #0f172a; --card-bg: #1e293b; --primary-neon: #00d2ff;
+            --secondary-neon: #a855f7; --success-color: #22c55e; --error-color: #ef4444;
+            --text-main: #e2e8f0; --text-dim: #94a3b8;
+            --gold: #fbbf24; --pink: #ec4899;
+            --national-green: #006C35;
+        }
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+        body { background-color: var(--bg-color); font-family: 'Segoe UI', sans-serif; color: var(--text-main); padding: 20px; }
+
+        h1, h2 { color: var(--primary-neon); margin-bottom: 20px; text-align: center; text-transform: uppercase; letter-spacing: 2px; }
+        
+        .tabs { display: flex; justify-content: center; gap: 10px; margin-bottom: 30px; flex-wrap: wrap; }
+        .tab-btn { padding: 10px 25px; background: var(--card-bg); border: 1px solid var(--primary-neon); color: var(--primary-neon); cursor: pointer; border-radius: 5px; transition: 0.3s; font-weight: bold; }
+        .tab-btn.active { background: var(--primary-neon); color: var(--bg-color); box-shadow: 0 0 15px var(--primary-neon); }
+
+        .admin-section { background: var(--card-bg); padding: 25px; border-radius: 15px; margin-bottom: 30px; border: 1px solid #334155; max-width: 1000px; margin-left: auto; margin-right: auto; display: none; }
+        .admin-section.active { display: block; }
+
+        .form-group { margin-bottom: 15px; }
+        .form-group label { display: block; margin-bottom: 5px; color: var(--text-dim); }
+        .form-group input, .form-group select, .form-group textarea { width: 100%; padding: 10px; border-radius: 8px; border: 1px solid #334155; background: #0f172a; color: white; font-size: 1rem; outline: none; }
+
+        .btn { padding: 10px 20px; border-radius: 8px; border: none; font-weight: bold; cursor: pointer; transition: 0.3s; width: 100%; margin-top: 10px; }
+        .btn-add { background: var(--primary-neon); color: var(--bg-color); }
+        .btn-news { background: var(--secondary-neon); color: white; }
+        .btn-coupon { background: var(--national-green); color: white; }
+        .btn-delete { background: var(--error-color); color: white; width: auto; padding: 5px 10px; font-size: 0.8rem; }
+        .btn-reset { background: #b91c1c; color: white; margin-bottom: 15px; width: auto; }
+
+        .table-container { width: 100%; overflow-x: auto; }
+        table { width: 100%; border-collapse: collapse; margin-top: 20px; font-size: 0.9rem; min-width: 500px; }
+        th, td { padding: 12px; text-align: right; border-bottom: 1px solid #334155; }
+        th { color: var(--primary-neon); background: rgba(0, 210, 255, 0.05); }
+
+        .nav-links { text-align: center; margin-bottom: 20px; }
+        .nav-links a { color: var(--primary-neon); text-decoration: none; margin: 0 10px; font-size: 0.9rem; font-weight: bold; }
+        .nav-links a:hover { text-decoration: underline; }
+
+        .table-input { background: #0f172a; color: white; border: 1px solid #334155; padding: 5px; border-radius: 4px; width: 90px; }
+        .table-select { background: #0f172a; color: white; border: 1px solid #334155; padding: 5px; border-radius: 4px; }
+    </style>
+</head>
+<body>
+
+    <div class="nav-links"><a href="index.html">⬅️ العودة للمتجر الرئيسي</a></div>
+
+    <h1>COMMAND CENTER</h1>
+    <div class="tabs">
+        <button class="tab-btn active" onclick="showTab('tab-products', event)">🤖 البوتات</button>
+        <button class="tab-btn" onclick="showTab('tab-users', event)">👥 المستخدمين</button>
+        <button class="tab-btn" onclick="showTab('tab-coupons', event)">🎟️ أكواد الخصم</button>
+        <button class="tab-btn" onclick="showTab('tab-news', event)">📢 الأخبار</button>
+        <button class="tab-btn" onclick="showTab('tab-orders', event)">📜 الطلبات</button>
+    </div>
+
+    <!-- TAB: PRODUCTS -->
+    <div id="tab-products" class="admin-section active">
+        <h2>إدارة البوتات والمنتجات</h2>
+        <button class="btn btn-reset" onclick="resetProductsStorage()">⚠️ إعادة ضبط وتفريغ بضائع المتجر الافتراضية</button>
+        
+        <div style="border-top: 1px solid #334155; padding-top: 15px; margin-top: 15px;">
+            <h3>إضافة بوت جديد للمتجر</h3>
+            <div class="form-group"><label>اسم البوت:</label><input type="text" id="bot-name" placeholder="مثلاً: بوت تذاكر"></div>
+            <div class="form-group"><label>السعر (بالكريدت):</label><input type="number" id="bot-price" placeholder="50"></div>
+            <div class="form-group"><label>المخزون:</label><input type="number" id="bot-stock" placeholder="10"></div>
+            <div class="form-group"><label>التصنيف:</label>
+                <select id="bot-category">
+                    <option value="حماية">حماية</option>
+                    <option value="ألعاب">ألعاب</option>
+                    <option value="موسيقى">موسيقى</option>
+                    <option value="أخرى">أخرى</option>
+                </select>
+            </div>
+            <div class="form-group"><label>الوصف:</label><textarea id="bot-desc" placeholder="شخصيات وخصائص البوت..."></textarea></div>
+            <div class="form-group"><label>رابط الصورة:</label><input type="text" id="bot-img" placeholder="https://example.com/image.png"></div>
+            <div class="form-group"><label>لون الزر:</label>
+                <select id="bot-color">
+                    <option value="btn-cyan">أزرق</option>
+                    <option value="btn-purple">بنفسجي</option>
+                    <option value="btn-green">أخضر</option>
+                    <option value="btn-gold">ذهبي</option>
+                </select>
+            </div>
+            <button class="btn btn-add" onclick="addBot()">إضافة البوت</button>
+        </div>
+
+        <div class="table-container">
+            <table>
+                <thead><tr><th>الاسم</th><th>التصنيف</th><th>السعر</th><th>المخزون</th><th>إجراء</th></tr></thead>
+                <tbody id="admin-products-list"></tbody>
+            </table>
+        </div>
+    </div>
+
+    <!-- TAB: USERS -->
+    <div id="tab-users" class="admin-section">
+        <h2>إدارة المستخدمين والأرصدة</h2>
+        <div class="table-container">
+            <table>
+                <thead><tr><th>يوزر ديسكورد</th><th>الرصيد 💳</th><th>الرتبة</th><th>إجراء</th></tr></thead>
+                <tbody id="admin-users-list"></tbody>
+            </table>
+        </div>
+    </div>
+
+    <!-- TAB: COUPONS -->
+    <div id="tab-coupons" class="admin-section">
+        <h2>إدارة أكواد الخصم</h2>
+        <div class="form-group"><label>كود الخصم (مثال: KSA96):</label><input type="text" id="coupon-code" placeholder="أدخل الكود..."></div>
+        <div class="form-group"><label>نسبة الخصم (%):</label><input type="number" id="coupon-discount" placeholder="مثلاً: 30"></div>
+        <div class="form-group"><label>تاريخ إنتهاء الصلاحية:</label><input type="date" id="coupon-expiry"></div>
+        <button class="btn btn-coupon" onclick="addCoupon()">إضافة وتفعيل الكود</button>
+        
+        <div class="table-container">
+            <table>
+                <thead><tr><th>الكود</th><th>الخصم (%)</th><th>تاريخ الانتهاء</th><th>الحالة</th><th>إجراء</th></tr></thead>
+                <tbody id="admin-coupons-list"></tbody>
+            </table>
+        </div>
+    </div>
+
+    <!-- TAB: NEWS -->
+    <div id="tab-news" class="admin-section">
+        <h2>نشر خبر عاجل</h2>
+        <div class="form-group">
+            <label>نص الخبر (سيظهر في أعلى المتجر):</label>
+            <textarea id="news-text" rows="4" placeholder="مثلاً: خصم 50% على جميع بوتات الحماية اليوم! 🚀"></textarea>
+        </div>
+        <button class="btn btn-news" onclick="postNews()">نشر الخبر الآن</button>
+        <div style="margin-top: 20px; text-align: center;">
+            <p style="color: var(--text-dim); font-size: 0.8rem;">الخبر الحالي النشط:</p>
+            <p id="current-news-display" style="color: var(--primary-neon); font-weight: bold;"></p>
+        </div>
+    </div>
+
+    <!-- TAB: ORDERS -->
+    <div id="tab-orders" class="admin-section">
+        <h2>سجل المبيعات والطلبات</h2>
+        <div class="table-container">
+            <table>
+                <thead><tr><th>يوزر المشتري</th><th>اسم البوت</th><th>السعر</th><th>الوقت</th></tr></thead>
+                <tbody id="admin-orders-list"></tbody>
+            </table>
+        </div>
+    </div>
+
+    <script>
+        let products = JSON.parse(localStorage.getItem('cyberbot_products')) || [];
+        let users = JSON.parse(localStorage.getItem('cyberbot_users')) || [];
+        let orders = JSON.parse(localStorage.getItem('cyberbot_orders')) || [];
+        let news = localStorage.getItem('cyberbot_news') || "";
+        let coupons = JSON.parse(localStorage.getItem('cyberbot_coupons_detailed')) || {
+            "KSA96": { discount: 30, expiry: "2026-12-31" },
+            "AZNA96": { discount: 50, expiry: "2026-12-31" }
+        };
+
+        function showTab(tabId, event) {
+            document.querySelectorAll('.admin-section').forEach(s => s.classList.remove('active'));
+            document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+            document.getElementById(tabId).classList.add('active');
+            event.currentTarget.classList.add('active');
+            
+            if(tabId === 'tab-products') renderProducts();
+            if(tabId === 'tab-users') renderUsers();
+            if(tabId === 'tab-coupons') renderCoupons();
+            if(tabId === 'tab-orders') renderOrders();
+            if(tabId === 'tab-news') {
+                document.getElementById('news-text').value = news;
+                document.getElementById('current-news-display').innerText = news || "لا يوجد أخبار حالياً";
+            }
+        }
+
+        function addBot() {
+            const name = document.getElementById('bot-name').value.trim();
+            const price = parseInt(document.getElementById('bot-price').value);
+            const stock = parseInt(document.getElementById('bot-stock').value);
+            const category = document.getElementById('bot-category').value;
+            const desc = document.getElementById('bot-desc').value.trim();
+            const img = document.getElementById('bot-img').value.trim() || "https://via.placeholder.com/70";
+            const color = document.getElementById('bot-color').value;
+
+            if (!name || isNaN(price) || isNaN(stock)) {
+                alert("الرجاء تعبئة الحقول الأساسية بشكل صحيح!");
+                return;
+            }
+
+            products.push({ name, price, stock, category, desc, img, color });
+            localStorage.setItem('cyberbot_products', JSON.stringify(products));
+            
+            document.getElementById('bot-name').value = '';
+            document.getElementById('bot-price').value = '';
+            document.getElementById('bot-stock').value = '';
+            document.getElementById('bot-desc').value = '';
+            document.getElementById('bot-img').value = '';
+
+            renderProducts();
+            alert("تمت إضافة البوت بنجاح!");
+        }
+
+        function renderProducts() {
+            const list = document.getElementById('admin-products-list');
+            if(!products || products.length === 0) {
+                list.innerHTML = '<tr><td colspan="5" style="text-align:center; color:var(--text-dim);">لا توجد بوتات مضافة حالياً</td></tr>';
+                return;
+            }
+            list.innerHTML = products.map((p, i) => `
+                <tr>
+                    <td>${p.name || 'بدون اسم'}</td>
+                    <td>${p.category || 'أخرى'}</td>
+                    <td>${p.price || 0} 💳</td>
+                    <td>${p.stock || 0}</td>
+                    <td><button class="btn btn-delete" onclick="deleteBot(${i})">حذف</button></td>
+                </tr>
+            `).join('');
+        }
+
+        function deleteBot(i) { 
+            if(confirm(`هل أنت متأكد من حذف البوت "${products[i].name}"؟`)) { 
+                products.splice(i, 1); 
+                localStorage.setItem('cyberbot_products', JSON.stringify(products)); 
+                renderProducts(); 
+            } 
+        }
+
+        function resetProductsStorage() {
+            if(confirm("تحذير: سيتم مسح قائمة البوتات وتفريغ التخزين المحلي تماماً. هل أنت متأكد؟")) {
+                localStorage.removeItem('cyberbot_products');
+                products = [];
+                renderProducts();
+                alert("تم تفريغ قائمة البوتات بنجاح.");
+            }
+        }
+
+        function renderUsers() {
+            const list = document.getElementById('admin-users-list');
+            if(users.length === 0) {
+                list.innerHTML = '<tr><td colspan="4" style="text-align:center; color:var(--text-dim);">لا يوجد مستخدمين مسجلين حتى الآن</td></tr>';
+                return;
+            }
+            list.innerHTML = users.map((u, i) => `
+                <tr>
+                    <td style="color: var(--primary-neon); font-weight: bold;">${u.username || 'مستخدم'}</td>
+                    <td><input type="number" class="table-input" value="${u.credits}" onchange="updateUserCredits(${i}, this.value)"></td>
+                    <td>
+                        <select class="table-select" onchange="updateUserRank(${i}, this.value)">
+                            <option value="Member" ${u.rank === 'Member' ? 'selected' : ''}>Member</option>
+                            <option value="VIP" ${u.rank === 'VIP' ? 'selected' : ''}>VIP</option>
+                            <option value="Admin" ${u.rank === 'Admin' ? 'selected' : ''}>Admin</option>
+                        </select>
+                    </td>
+                    <td><button class="btn btn-delete" onclick="deleteUser(${i})">حذف</button></td>
+                </tr>
+            `).join('');
+        }
+
+        function updateUserCredits(i, val) { 
+            users[i].credits = parseInt(val) || 0; 
+            localStorage.setItem('cyberbot_users', JSON.stringify(users)); 
+        }
+
+        function updateUserRank(i, val) { 
+            users[i].rank = val; 
+            localStorage.setItem('cyberbot_users', JSON.stringify(users)); 
+            renderUsers(); 
+        }
+
+        function deleteUser(i) { 
+            if(confirm("هل أنت متأكد من حذف المستخدم؟")) { 
+                users.splice(i, 1); 
+                localStorage.setItem('cyberbot_users', JSON.stringify(users)); 
+                renderUsers(); 
+            } 
+        }
+
+        function addCoupon() {
+            const code = document.getElementById('coupon-code').value.trim().toUpperCase();
+            const discount = parseInt(document.getElementById('coupon-discount').value);
+            const expiry = document.getElementById('coupon-expiry').value;
+
+            if (!code || isNaN(discount) || !expiry) {
+                alert("الرجاء ملء جميع بيانات الكود!");
+                return;
+            }
+
+            coupons[code] = { discount: discount, expiry: expiry };
+            saveCouponsToStorage();
+            
+            document.getElementById('coupon-code').value = '';
+            document.getElementById('coupon-discount').value = '';
+            document.getElementById('coupon-expiry').value = '';
+
+            renderCoupons();
+            alert(`تم تفعيل كود الخصم [${code}] بنجاح!`);
+        }
+
+        function renderCoupons() {
+            const list = document.getElementById('admin-coupons-list');
+            const keys = Object.keys(coupons);
+            
+            if(keys.length === 0) {
+                list.innerHTML = '<tr><td colspan="5" style="text-align:center; color:var(--text-dim);">لا توجد أكواد نشطة</td></tr>';
+                return;
+            }
+
+            const today = new Date().toISOString().split('T')[0];
+
+            list.innerHTML = keys.map(code => {
+                const data = coupons[code];
+                const isExpired = data.expiry < today;
+                return `
+                    <tr>
+                        <td style="font-weight: bold; color: var(--primary-neon);">${code}</td>
+                        <td>${data.discount}%</td>
+                        <td>${data.expiry}</td>
+                        <td>${isExpired ? '<span style="color:var(--error-color)">منتهي</span>' : '<span style="color:var(--success-color)">ساري</span>'}</td>
+                        <td><button class="btn btn-delete" onclick="deleteCoupon('${code}')">حذف</button></td>
+                    </tr>
+                `;
+            }).join('');
+        }
+
+        function deleteCoupon(code) {
+            if(confirm(`حذف الكود [${code}]؟`)) {
+                delete coupons[code];
+                saveCouponsToStorage();
+                renderCoupons();
+            }
+        }
+
+        function saveCouponsToStorage() {
+            localStorage.setItem('cyberbot_coupons_detailed', JSON.stringify(coupons));
+            let simpleMap = {};
+            const today = new Date().toISOString().split('T')[0];
+            for (let c in coupons) {
+                if (coupons[c].expiry >= today) {
+                    simpleMap[c] = coupons[c].discount;
+                }
+            }
+            localStorage.setItem('storeCoupons', JSON.stringify(simpleMap));
+        }
+
+        function postNews() {
+            const text = document.getElementById('news-text').value.trim();
+            localStorage.setItem('cyberbot_news', text);
+            news = text;
+            document.getElementById('current-news-display').innerText = text || "لا يوجد أخبار";
+            alert("تم نشر الخبر بنجاح!");
+        }
+
+        function renderOrders() {
+            const list = document.getElementById('admin-orders-list');
+            if(orders.length === 0) {
+                list.innerHTML = '<tr><td colspan="4" style="text-align:center; color:var(--text-dim);">لا توجد طلبات شراء</td></tr>';
+                return;
+            }
+            list.innerHTML = orders.map(o => `
+                <tr>
+                    <td style="color: var(--primary-neon); font-weight: bold;">${o.username || 'مستخدم'}</td>
+                    <td>${o.botName}</td>
+                    <td>${o.price}</td>
+                    <td>${o.time}</td>
+                </tr>
+            `).join('');
+        }
+
+        renderProducts();
+    </script>
+</body>
+</html>

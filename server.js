@@ -48,10 +48,17 @@ function saveUser(userData) {
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
+// إعداد الجلسات (Sessions) مع التوافق مع بيئة الإنتاج Render
+app.set('trust proxy', 1);
 app.use(session({
     secret: 'resol_super_secret_session_key',
     resave: false,
-    saveUninitialized: false
+    saveUninitialized: false,
+    cookie: { 
+        secure: process.env.NODE_ENV === 'production', // تفعيل الأمان إذا كان على Render
+        httpOnly: true,
+        maxAge: 24 * 60 * 60 * 1000 // مدة الجلسة يوم كامل
+    }
 }));
 
 // قراءة الملفات الثابتة من مجلد public
@@ -224,6 +231,7 @@ app.get('/api/admin/all-users', (req, res) => {
 // تسجيل الخروج ومسح الجلسة
 app.get('/logout', (req, res) => {
     req.session.destroy(() => {
+        res.clearCookie('connect.sid');
         res.redirect('/');
     });
 });

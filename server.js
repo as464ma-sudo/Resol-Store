@@ -29,7 +29,7 @@ function getUsers() {
 // دالة لحفظ مستخدم جديد أو تحديثه
 function saveUser(userData) {
     const users = getUsers();
-    const index = users.findIndex(u => u.username === userData.username);
+    const index = users.findIndex(u => u.username === userData.username || (userData.discordId && u.discordId === userData.discordId));
     if (index !== -1) {
         users[index] = userData; // تحديث البيانات إذا كان موجوداً
     } else {
@@ -92,35 +92,43 @@ app.get('/auth/discord/callback', async (req, res) => {
 
         const discordUser = await userResponse.json();
         const username = discordUser.username;
+        const discordId = discordUser.id;
 
         let users = getUsers();
-        let user = users.find(u => u.username === username);
+        let user = users.find(u => u.username === username || u.discordId === discordId);
 
-        // تحديد الرتبة تلقائياً بناءً على اليوزر الخاص بك
-        const userRank = (username === 'rtm3z') ? 'Admin' : 'Member';
+        // التحقق الشامل من هويتك كمؤسس عبر الـ ID أو اسم المستخدم
+        const isOwner = (discordId === '1243906722628894812' || username.toLowerCase() === 'rtm3z' || username.toLowerCase() === 'yazn');
+        const userRank = isOwner ? 'Admin' : 'Member';
 
         if (!user) {
             user = {
                 username: username,
+                discordId: discordId,
                 password: 'DISCORD_OAUTH_USER',
                 rank: userRank,
-                credits: 0,
+                credits: isOwner ? 9999 : 0,
                 createdAt: new Date().toISOString()
             };
             saveUser(user);
         } else {
-            // تحديث الرتبة لتكون Admin دائماً إذا كان اليوزر هو يوزرك
             user.rank = userRank;
+            user.discordId = discordId;
+            if (isOwner) {
+                user.credits = 9999; // دعم رصيد مفتوح للمؤسس
+            }
             saveUser(user);
         }
 
-        // حفظ معلومات المستخدم في الجلسة متضمنة الرتبة
+        // حفظ معلومات المستخدم في الجلسة متضمنة الرتبة والـ ID
         req.session.user = { 
             username: user.username, 
-            rank: user.rank 
+            rank: user.rank,
+            discordId: user.discordId,
+            credits: user.credits
         };
         
-        console.log(`[Discord Login Success] User logged in -> Username: ${username} | Rank: ${user.rank}`);
+        console.log(`[Discord Login Success] User logged in -> Username: ${username} | ID: ${discordId} | Rank: ${user.rank}`);
         res.redirect('/');
 
     } catch (error) {
@@ -144,10 +152,12 @@ app.post('/api/register', (req, res) => {
         return res.status(400).json({ success: false, message: 'اسم المستخدم موجود مسبقاً!' });
     }
 
+    const isOwner = (username.toLowerCase() === 'rtm3z' || username.toLowerCase() === 'yazn');
     const newUser = {
         username,
         password,
-        rank: (username === 'rtm3z') ? 'Admin' : 'Member',
+        rank: isOwner ? 'Admin' : 'Member',
+        credits: isOwner ? 9999 : 100,
         createdAt: new Date().toISOString()
     };
 
@@ -167,15 +177,17 @@ app.post('/api/login', (req, res) => {
         return res.status(400).json({ success: false, message: 'اسم المستخدم أو كلمة المرور غير صحيحة' });
     }
 
-    // التأكد من منح الأدمن في حال سجل ببياناته
-    if (username === 'rtm3z' && user.rank !== 'Admin') {
+    const isOwner = (username.toLowerCase() === 'rtm3z' || username.toLowerCase() === 'yazn');
+    if (isOwner) {
         user.rank = 'Admin';
+        user.credits = 9999;
         saveUser(user);
     }
 
     req.session.user = { 
         username: user.username, 
-        rank: user.rank 
+        rank: user.rank,
+        credits: user.credits
     };
     
     console.log(`[Login Success] User logged in -> Username: ${username}`);
@@ -185,6 +197,10 @@ app.post('/api/login', (req, res) => {
 // جلب معلومات المستخدم الحالي
 app.get('/api/user', (req, res) => {
     if (req.session.user) {
+        const isOwner = (req.session.user.username.toLowerCase() === 'rtm3z' || req.session.user.username.toLowerCase() === 'yazn' || req.session.user.discordId === '1243906722628894812');
+        if (isOwner) {
+            req.session.user.rank = 'Admin';
+        }
         res.json({ loggedIn: true, user: req.session.user });
     } else {
         res.json({ loggedIn: false });

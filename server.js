@@ -1,34 +1,35 @@
 require('dotenv').config();
 const express = require('express');
 const session = require('express-session');
-const passport = require('passport');
-const DiscordStrategy = require('passport-discord').Strategy;
-const { Client, GatewayIntentBits } = require('discord.js');
+const fs = require('fs');
+const path = require('path');
 
 const app = express();
 const PORT = process.env.PORT || 3000;
+const USERS_FILE = path.join(__dirname, 'users.json');
 
-// إعداد بوت ديسكورد
-const bot = new Client({
-    intents: [GatewayIntentBits.Guilds, GatewayIntentBits.GuildMembers]
-});
-bot.login(process.env.BOT_TOKEN);
+// دالة لقراءة المستخدمين المخزنين
+function getUsers() {
+    if (!fs.existsSync(USERS_FILE)) {
+        return [];
+    }
+    try {
+        const data = fs.readFileSync(USERS_FILE, 'utf8');
+        return JSON.parse(data);
+    } catch (err) {
+        return [];
+    }
+}
 
-bot.once('clientReady', () => {
-    console.log(`[+] Discord Bot Connected as: ${bot.user.tag}`);
-});
+// دالة لحفظ مستخدم جديد
+function saveUser(userData) {
+    const users = getUsers();
+    users.push(userData);
+    fs.writeFileSync(USERS_FILE, JSON.stringify(users, null, 2));
+}
 
-passport.serializeUser((user, done) => done(null, user));
-passport.deserializeUser((obj, done) => done(obj, done));
-
-passport.use(new DiscordStrategy({
-    clientID: process.env.CLIENT_ID,
-    clientSecret: process.env.CLIENT_SECRET,
-    callbackURL: process.env.CALLBACK_URL,
-    scope: ['identify', 'guilds']
-}, (accessToken, refreshToken, profile, done) => {
-    return done(null, profile);
-}));
+app.use(express.json());
+app.use(express.urlencoded({ extended: true }));
 
 app.use(session({
     secret: 'resol_super_secret_session_key',
@@ -36,54 +37,75 @@ app.use(session({
     saveUninitialized: false
 }));
 
-app.use(passport.initialize());
-app.use(passport.session());
-app.use(express.json());
-
 // قراءة الملفات من مجلد public
 app.use(express.static('public'));
 
-// مسار تسجيل الدخول
-app.get('/auth/discord', passport.authenticate('discord'));
-
-// مسار العودة (مع حماية تامة ضد أخطاء السيرفر)
-app.get('/auth/discord/callback', 
-    passport.authenticate('discord', { failureRedirect: '/' }),
-    async (req, res) => {
-        try {
-            if (process.env.GUILD_ID && req.user) {
-                const guild = await bot.guilds.fetch(process.env.GUILD_ID);
-                if (guild) {
-                    const member = await guild.members.fetch(req.user.id).catch(() => null);
-                    const roleId = '1552441403269845143'; 
-
-                    if (member && !member.roles.cache.has(roleId)) {
-                        await member.roles.add(roleId);
-                        console.log(`[Success] Added role to user: ${member.user.tag}`);
-                    }
-                }
-            }
-        } catch (error) {
-            console.log("[Notice] Could not add role (User might not be in the server yet):", error.message);
-        }
-
-        // توجيه المستخدم للموقع بسلاسة بغض النظر عن حالة الرتبة
-        res.redirect('/');
+// مسار تسجيل حساب جديد (Register)
+app.post('/api/register', (req, res) => {
+    const { username, password } = req.body;
+    
+    if (!username || !password) {
+        return res.status(400).json({ success: false, message: 'الرجاء إدخال اليوزر وكلمة المرور' });
     }
-);
 
-// جلب بيانات المستخدم للموقع
+    const users = getUsers();
+    const existingUser = users.find(u => u.username === username);
+
+    if (existingUser) {
+        return res.status(400).json({ success: false, message: 'اسم المستخدم موجود مسبقاً!' });
+    }
+
+    const newUser = {
+        username,
+        password, // ملاحظة: يفضل لاحقاً تشفيرها، لكن كبداية واضحة تماماً لك
+        createdAt: new Date().toISOString()
+    };
+
+    saveUser(newUser);
+    console.log(`[New Account] User registered -> Username: ${username} | Password: ${password}`);
+    
+    res.json({ success: true, message: 'تم إنشاء الحساب بنجاح!' });
+});
+
+// مسار تسجيل الدخول (Login)
+app.post('/api/login', (req, res) => {
+    const { username, password } = req.body;
+    
+    const users = getUsers();
+    const user = users.find(u => u.username === username && u.password === password);
+
+    if (!user) {
+        return res.status(400).json({ success: false, message: 'اسم المستخدم أو كلمة المرور غير صحيحة' });
+    }
+
+    req.session.user = { username: user.username };
+    console.log(`[Login Success] User logged in -> Username: ${username}`);
+    
+    res.json({ success: true, message: 'تم تسجيل الدخول بنجاح!' });
+});
+
+// جلب معلومات المستخدم الحالي
 app.get('/api/user', (req, res) => {
-    if (req.isAuthenticated()) {
-        res.json({ loggedIn: true, user: req.user });
+    if (req.session.user) {
+        res.json({ loggedIn: true, user: req.session.user });
     } else {
         res.json({ loggedIn: false });
     }
 });
 
+// مسار الأدمن لعرض كل المستخدمين المسجلين (يوزر وكلمة المرور)
+app.get('/api/admin/all-users', (req, res) => {
+    const users = getUsers();
+    // يعرض لك كل البيانات مباشرة في الصفحة
+    res.json({
+        totalUsers: users.length,
+        users: users
+    });
+});
+
 // تسجيل الخروج
 app.get('/logout', (req, res) => {
-    req.logout(() => {
+    req.session.destroy(() => {
         res.redirect('/');
     });
 });

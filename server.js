@@ -6,6 +6,7 @@ const DiscordStrategy = require('passport-discord').Strategy;
 const { Client, GatewayIntentBits } = require('discord.js');
 
 const app = express();
+const PORT = process.env.PORT || 3000;
 
 // إعداد بوت ديسكورد لإعطاء الرتب
 const bot = new Client({
@@ -13,7 +14,7 @@ const bot = new Client({
 });
 bot.login(process.env.BOT_TOKEN);
 
-bot.once('ready', () => {
+bot.once('clientReady', () => {
     console.log(`[+] Discord Bot Connected as: ${bot.user.tag}`);
 });
 
@@ -24,7 +25,7 @@ passport.use(new DiscordStrategy({
     clientID: process.env.CLIENT_ID,
     clientSecret: process.env.CLIENT_SECRET,
     callbackURL: process.env.CALLBACK_URL,
-    scope: ['identify', 'guilds'] // تم تعديل الصلاحيات لتكون متوافقة تماماً
+    scope: ['identify', 'guilds']
 }, (accessToken, refreshToken, profile, done) => {
     return done(null, profile);
 }));
@@ -38,6 +39,9 @@ app.use(session({
 app.use(passport.initialize());
 app.use(passport.session());
 app.use(express.json());
+
+// 1. قراءة الملفات من مجلد public (لحل مشكلة Cannot GET /)
+app.use(express.static('public'));
 
 // مسار تسجيل الدخول
 app.get('/auth/discord', passport.authenticate('discord'));
@@ -61,7 +65,7 @@ app.get('/auth/discord/callback',
             console.log("[Notice] Error adding role (Make sure user is in the guild & bot role is higher):", error.message);
         }
 
-        res.redirect('/index.html');
+        res.redirect('/');
     }
 );
 
@@ -77,13 +81,10 @@ app.get('/api/user', (req, res) => {
 // تسجيل الخروج
 app.get('/logout', (req, res) => {
     req.logout(() => {
-        res.redirect('/index.html');
+        res.redirect('/');
     });
 });
 
-// قراءة الملفات من المجلد الحالي (تأكد أن ملفاتك HTML هنا أو في مجلد public)
-app.use(express.static(__dirname));
-
-app.listen(process.env.PORT, () => {
-    console.log(`[+] Web Server running on http://localhost:${process.env.PORT}`);
+app.listen(PORT, () => {
+    console.log(`[+] Web Server running on http://localhost:${PORT}`);
 });
